@@ -1,13 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
-// Calibration derived from TWO real FIVB results:
-// 1) CAN 3-1 NED (VNL 2026, MWF=40): NED 291.51→281.52, lost exactly -9.99
-// 2) ESP 3-1 AZE (Golden League, MWF=30): ESP gained exactly +3.11
-// Scaling the cut-points themselves (not delta) by this factor minimizes
-// combined error across both real matches to ~0.08 points total.
-const CUT_SCALE = 0.31;
-const C1 = 0.9 * CUT_SCALE, C2 = 0.3 * CUT_SCALE, C3 = -0.1 * CUT_SCALE,
-      C4 = -0.6 * CUT_SCALE, C5 = -1.1 * CUT_SCALE;
+// Official cut-points from FIVB World Ranking documentation
+const C1 = -1.060, C2 = -0.394, C3 = 0, C4 = 0.394, C5 = 1.060;
 
 function normalCDF(x) {
   const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
@@ -42,7 +36,7 @@ const OUTCOMES = [
 const MWF_OPTIONS = [
   { label:"Olympic Games / World Cup",       value:50 },
   { label:"Nations League / Continental",    value:40 },
-  { label:"Annual Continental Events",       value:30 },
+  { label:"Annual Continental Events (European League)",       value:30 },
   { label:"Zonal / Recognized Events",       value:20 },
 ];
 
@@ -224,7 +218,9 @@ export default function App() {
 
   const results = OUTCOMES.map((o,i) => {
     let wrPoints = (o.ssv - emr) * mwf / 8;
-    // FIVB rule: you can never gain points by losing, never lose points by winning
+    // Official FIVB rule (from documentation):
+    // "a team winning a match cannot lose WR points" → minimum +0.01
+    // "a team losing a match cannot gain WR points" → maximum -0.01
     if (o.win  && wrPoints < 0.01) wrPoints =  0.01;
     if (!o.win && wrPoints > -0.01) wrPoints = -0.01;
     return { outcome: o, prob: probs[i], wrPoints, maxProb: maxP };
@@ -252,7 +248,7 @@ export default function App() {
           FIVB · WORLD RANKING SIMULATOR
         </div>
         <div style={{ fontSize:"22px", fontFamily:"'IBM Plex Sans',sans-serif", fontWeight:700, color:"#e8f0f8" }}>
-          How many points are at stake? by Paul Salleras
+          How many points can you win or lose? by PAUL SALLERAS
         </div>
         <div style={{ fontSize:"11px", color:C.muted, marginTop:"4px" }}>
           Enter team data from volleyballworld.com
@@ -343,7 +339,7 @@ export default function App() {
       </div>
 
       <div style={{ marginTop:"12px", fontSize:"9px", color:"#1e2d3a", textAlign:"center" }}>
-        Official FIVB formula · C1–C5 cut-points calibrated from historical match data
+        Official FIVB formula · C1–C5 cut-points from official FIVB documentation
       </div>
     </div>
   );
