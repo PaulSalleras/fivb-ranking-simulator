@@ -222,12 +222,13 @@ export default function App() {
   const delta = 8*(myTeam.score - rival.score)/1000;
   const maxP  = Math.max(...probs);
 
-  const results = OUTCOMES.map((o,i) => ({
-    outcome:  o,
-    prob:     probs[i],
-    wrPoints: (o.ssv - emr) * mwf / 8,
-    maxProb:  maxP,
-  }));
+  const results = OUTCOMES.map((o,i) => {
+    let wrPoints = (o.ssv - emr) * mwf / 8;
+    // FIVB rule: you can never gain points by losing, never lose points by winning
+    if (o.win  && wrPoints < 0.01) wrPoints =  0.01;
+    if (!o.win && wrPoints > -0.01) wrPoints = -0.01;
+    return { outcome: o, prob: probs[i], wrPoints, maxProb: maxP };
+  });
 
   const bestWin   = Math.max(...results.filter(r=>r.outcome.win ).map(r=>r.wrPoints));
   const worstLoss = Math.min(...results.filter(r=>!r.outcome.win).map(r=>r.wrPoints));
@@ -251,7 +252,7 @@ export default function App() {
           FIVB · WORLD RANKING SIMULATOR
         </div>
         <div style={{ fontSize:"22px", fontFamily:"'IBM Plex Sans',sans-serif", fontWeight:700, color:"#e8f0f8" }}>
-          How many points are at stake? · by Paul Salleras
+          How many points are at stake? by Paul Salleras
         </div>
         <div style={{ fontSize:"11px", color:C.muted, marginTop:"4px" }}>
           Enter team data from volleyballworld.com
